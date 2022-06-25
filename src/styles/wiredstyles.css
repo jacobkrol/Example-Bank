@@ -1,0 +1,53 @@
+.primary-button {
+  color: var(--sixty);
+  background-color: var(--thirty);
+  border-radius: 2px;
+}
+
+.primary-button svg {
+  color: var(--sixty);
+}
+
+.width-100 {
+  width: 100%;
+}
+
+.center-block {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.margin-top-1 {
+  margin-top: 1rem;
+}
+
+.margin-bottom-1 {
+  margin-bottom: 1rem;
+}
+
+.padding-1p5 {
+  padding: 1.5rem;
+}
+
+.example-card {
+  display: flex;
+  align-items: flex-start;
+}
+
+.example-card > div:first-of-type {
+  float: left;
+  flex-grow: 1;
+}
+
+.example-card img,
+.example-card svg {
+  min-width: 5rem;
+  max-width: 5rem;
+  aspect-ratio: 1/1;
+  float: right;
+}
+
+.float-right {
+  float: right;
+}
