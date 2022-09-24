@@ -5,6 +5,7 @@ body {
   font-family: "Gloria Hallelujah", "Roboto", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--thirty);
 }
 
 html {
@@ -19,5 +20,14 @@ html {
   --sixty: #f8f4e3;
   --thirty: #2a2b2a;
   --ten: #ffe366;
+  --wired-toggle-on-color: var(--ten);
+  --wired-toggle-off-color: var(--sixty);
+  --wired-combo-popup-bg: var(--sixty);
+  --wired-item-selected-bg: var(--ten);
+  --wired-item-selected-color: var(--thirty);
+}
+
+a {
+  color: inherit;
 }
 

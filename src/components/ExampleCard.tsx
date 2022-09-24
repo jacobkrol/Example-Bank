@@ -1,8 +1,7 @@
 import { Text, Link } from "../styles/styled";
 import { WiredCard } from "./WiredElements";
 import Lightbulb from "../images/lightbulb";
-
-const nbsp = "\xa0";
+import ImageNotSupported from "../images/noimage";
 
 const getDomainFromUrl: (url: string) => string = (url) => {
   try {
@@ -15,26 +14,26 @@ const getDomainFromUrl: (url: string) => string = (url) => {
 
 const blankState = {
   title: "Example Title",
-  source: "https://example.com",
+  source: "example.com",
   description:
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ac lacus finibus, accumsan lorem sit amet, faucibus leo."
 };
 
-// "https://kroljs.com/static/media/jk-brackets-64.2c84df93.png"
-
 export default function ExampleCard({
   title,
   source,
-  description
+  description,
+  img
 }: {
   title: string;
   source: string;
   description: string;
+  img?: string;
 }) {
   return (
     <WiredCard className="padding-1p5">
       <div className="example-card">
-        <div>
+        <div className="example-card-text">
           <Text as="h3" fontSize="1.5rem">
             {title || blankState.title}
           </Text>
@@ -45,7 +44,15 @@ export default function ExampleCard({
             {description || blankState.description}
           </Text>
         </div>
-        <Lightbulb alt="Preview of link"></Lightbulb>
+        <div className="img-wrapper" aria-hidden="true">
+          {img === "none" ? (
+            <ImageNotSupported alt="No image found for link" size={40} />
+          ) : img ? (
+            <img src={img} alt="Preview of link" />
+          ) : (
+            <Lightbulb alt="Preview of link"></Lightbulb>
+          )}
+        </div>
       </div>
     </WiredCard>
   );

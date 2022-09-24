@@ -1,25 +1,42 @@
 {
-  "short_name": "xBank",
-  "name": "Example Bank",
+  "short_name": "Ex Book",
+  "name": "Example Book",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "logo-maskable-192.png",
+      "type": "image/png",
+      "purpose": "maskable",
+      "sizes": "192x192"
     },
     {
-      "src": "logo192.png",
+      "src": "logo-maskable-383.png",
+      "type": "image/png",
+      "purpose": "maskable",
+      "sizes": "383x383"
+    },
+    {
+      "src": "logo-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "logo-237.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "237x237"
     }
   ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#FFE366",
+  "background_color": "#F8F4E3"
 }
+

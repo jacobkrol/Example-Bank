@@ -1,14 +1,22 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
-import Lightbulb from "../images/lightbulb";
+import { Text } from "../styles/styled";
+import { auth, signOutUser } from "../hooks/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import Logo from "../images/logo-146.png";
 
 const HeaderContainer = styled.div`
   display: inline-block;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   background-color: ${(props) => props.theme.colors["30"]};
   color: ${(props) => props.theme.colors["60"]};
-  padding: 0.2rem 0.8rem;
+  padding: 1rem 2rem;
   box-shadow: ${(props) => `0px 0px 12px 0px ${props.theme.colors["30"]}`};
+  z-index: 99;
 `;
 const LeftGroup = styled.div`
   float: left;
@@ -16,17 +24,76 @@ const LeftGroup = styled.div`
   align-items: center;
   gap: 1rem;
 `;
-const HeaderTitle = styled.h1`
-  font-size: 1.4rem;
+
+const RightGroup = styled.div`
+  float: right;
+  display: flex;
+  place-items: center;
 `;
 
 export default function Header(): JSX.Element {
+  const [user] = useAuthState(auth);
+
+  const signIn = async () => {
+    const googleProvider = new GoogleAuthProvider();
+    try {
+      await signInWithRedirect(auth, googleProvider);
+    } catch (err: any) {
+      if (!err.message.match("auth/popup-closed-by-user")) {
+        alert(
+          "An error occurred signing you in. " +
+            "Please refresh the page, check your connection, and try again."
+        );
+      }
+      console.error(err);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const res = await signOutUser();
+      if (!res) {
+        alert(
+          "An error occurred while attempting to sign you out. " +
+            "Please refresh the page, check your connection, and try again."
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert(
+        "An error occurred while attempting to sign you out. " +
+          "Please refresh the page, check your connection, and try again."
+      );
+    }
+  };
+
   return (
     <HeaderContainer>
       <LeftGroup>
-        <Lightbulb size={25} />
-        <HeaderTitle>App Name</HeaderTitle>
+        <Link to="/" className="center-y">
+          <img
+            src={Logo}
+            height="30px"
+            style={{ borderRadius: "25%" }}
+            alt="app logo"
+          />
+        </Link>
+        <Link to="/" className="no-underline">
+          <Text as="h1" fontSize="1.4rem">
+            Example Book
+          </Text>
+        </Link>
       </LeftGroup>
+      <RightGroup>
+        <Text
+          as="a"
+          className="anchor"
+          onClick={user ? signOut : signIn}
+          fontSize="1.5rem"
+        >
+          {user ? "Sign Out" : "Sign In"}
+        </Text>
+      </RightGroup>
     </HeaderContainer>
   );
 }

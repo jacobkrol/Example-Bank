@@ -36,18 +36,99 @@
 }
 
 .example-card > div:first-of-type {
-  float: left;
   flex-grow: 1;
+}
+
+.example-card .img-wrapper {
+  min-width: 5rem;
+  max-width: 5rem;
+  min-height: 5rem;
+  max-height: 5rem;
+  overflow: hidden;
+  display: flex;
+  place-items: center;
+  position: relative;
 }
 
 .example-card img,
 .example-card svg {
-  min-width: 5rem;
   max-width: 5rem;
-  aspect-ratio: 1/1;
-  float: right;
+  max-height: 5rem;
+  margin: auto;
+}
+
+.example-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .float-right {
   float: right;
+}
+
+.wired-rendered {
+  opacity: 1;
+}
+
+.stripped-ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox-li {
+  display: flex;
+  align-items: stretch;
+}
+
+.checkbox-li > .wired-rendered:first-child {
+  padding-top: 2rem;
+}
+
+.center-y {
+  display: flex;
+  align-items: center;
+}
+
+.center-x {
+  text-align: center;
+}
+
+.flex-center-x {
+  display: flex;
+  justify-content: center;
+}
+
+.no-underline {
+  text-decoration: none;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.anchor {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.background-60 {
+  background-color: var(--sixty);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0.5rem;
+}
+
+.dialog > * {
+  align-self: flex-end;
+  margin-right: 1rem;
+}
+
+.sans-serif {
+  font-family: sans-serif;
 }

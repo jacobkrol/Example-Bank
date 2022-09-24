@@ -5,6 +5,7 @@ export const CenteredRow = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
 `;
 interface TextProps {
   fontSize?: string | number;
@@ -36,14 +37,16 @@ export const BodyContainer = styled.div`
   flex-direction: column;
   align-items: stretch;
   margin: 0 auto;
+  margin-top: 50px;
   gap: 1.25rem;
-  width: clamp(50%, 10rem, 95vw);
+  width: clamp(20rem, 90%, 50rem);
 `;
 export const NavContainer = styled.div`
   display: flex;
   justify-content: center;
   margin: 0;
   gap: 1.5rem;
+  flex-wrap: wrap;
 `;
 export const Form = styled.form`
   display: flex;
@@ -54,4 +57,16 @@ export const Form = styled.form`
 export const FooterContainer = styled.footer`
   margin-top: auto;
   margin-bottom: 1rem;
+`;
+
+export const BrowseContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`;
+
+export const SpinnerArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
