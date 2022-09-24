@@ -2,6 +2,7 @@
   "name": "examplebook",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://kroljs.com/Example-Book",
   "dependencies": {
     "firebase": "^9.8.4",
     "react": "^17.0.2",
