@@ -91,6 +91,18 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
     QueryDocumentSnapshot<Example> | undefined
   >();
   const checkedExsRef = useRef<string[]>([]);
+  const observer = useRef<IntersectionObserver>();
+
+  const lastExRef = useCallback(exNode => {
+    if (isLoading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && loadMore) {
+        loadNext();
+      }
+    });
+    if (exNode) observer.current.observe(exNode);
+  }, [isLoading, loadMore]);
 
   const navigate = useNavigate();
 
@@ -111,15 +123,9 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
         );
         data = docs.map((d) => d.data());
         // append new examples, removing duplicates from double API calls
-        setExamples((prev) =>
-          prev
-            .concat(data)
-            .reduce(
-              (acc, ex) =>
-                acc.find((other) => other.id === ex.id) ? acc : acc.concat(ex),
-              Array<Example>(0)
-            )
-        );
+        const uniqueData = data.filter(x => !examples.find(e => e.id === x.id));
+        setExamples((prev) => prev.concat(...uniqueData));
+
         if (docs.length) setLastEx(docs[docs.length - 1]);
       } catch (err) {
         console.error(err);
@@ -442,20 +448,11 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
           </div>
         </div>
 
-        {isLoading ? (
-          <SpinnerArea>
-            <Text fontSize="1.25rem">Loading examples...</Text>
-            <WiredSpinner spinning />
-          </SpinnerArea>
-        ) : !examples.length ? (
-          <Text fontSize="1.25rem" className="center-x">
-            No examples found :/
-          </Text>
-        ) : (
+        {examples.length ? (
           <>
             <ul className="stripped-ul">
-              {examples.map((ex: Example) => (
-                <li key={ex.id} className="checkbox-li">
+              {examples.map((ex: Example, index: number) => (
+                <li key={ex.id} className="checkbox-li" ref={index === examples.length - 1 ? lastExRef : null}>
                   <WiredCheckbox
                     onChange={() => toggleCheck(ex.id || "no_id")}
                     checked={checkedExs.includes(ex.id)}
@@ -469,18 +466,34 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
                 </li>
               ))}
             </ul>
-            <div className="flex-center-x width-100">
-              {loadMore ? (
-                <WiredIconButton onClick={loadNext}>
-                  <CaretDown alt="load more examples" />
-                </WiredIconButton>
-              ) : (
-                <Text as="p" fontSize="1.25rem">
-                  No more examples found.
-                </Text>
-              )}
-            </div>
+            { isLoading ? (
+              <SpinnerArea>
+                <Text fontSize="1.25rem">Loading examples...</Text>
+                <WiredSpinner spinning />
+              </SpinnerArea>
+            ) : (
+              <div className="flex-center-x width-100">
+                {loadMore ? (
+                  <WiredIconButton onClick={loadNext}>
+                    <CaretDown alt="load more examples" />
+                  </WiredIconButton>
+                ) : (
+                  <Text as="p" fontSize="1.25rem">
+                    No more examples found.
+                  </Text>
+                )}
+              </div>
+            )}
           </>
+        ) : isLoading ? (
+          <SpinnerArea>
+            <Text fontSize="1.25rem">Loading examples...</Text>
+            <WiredSpinner spinning />
+          </SpinnerArea>
+        ) : (
+          <Text fontSize="1.25rem" className="center-x">
+            No examples found :/
+          </Text>
         )}
       </BrowseContainer>
     </>

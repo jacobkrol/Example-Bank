@@ -171,9 +171,16 @@ export const getCodeExamples: (
 
   // fetch redeemed examples by id
   const exRef = collection(db, "examples") as CollectionReference<Example>;
-  const exQuery = query(exRef, where("id", "in", exampleIds));
-  const exSnapshots = await getDocs(exQuery);
-  if (!exSnapshots.docs.length) return false;
+  let batchedIds: string[] = [...exampleIds];
+  let docs: QueryDocumentSnapshot<Example>[] = [];
+  while(batchedIds.length) {
+    const batch = batchedIds.splice(0,10);
+    const exQuery = query(exRef, where("id", "in", batch));
+    const exSnapshots = await getDocs(exQuery);
+    if (!exSnapshots.docs.length) return false;
+
+    docs.push(...exSnapshots.docs);
+  }
 
   // if successful and non-admin, mark the code as used
   if (!adminOnly) {
@@ -182,7 +189,7 @@ export const getCodeExamples: (
   }
 
   // return the redeemed examples
-  return exSnapshots.docs;
+  return docs;
 };
 
 export const setUsedValue: (
@@ -191,15 +198,19 @@ export const setUsedValue: (
 ) => Promise<void[]> = async (exampleIds, used) => {
   // fetch examples to modify
   const exRef = collection(db, "examples");
-  const exQuery = query(exRef, where("id", "in", exampleIds));
-  const exSnapshots = await getDocs(exQuery);
-
-  // modify used value for each
+  let batchedIds: string[] = [...exampleIds];
   let changes: Promise<void>[] = [];
-  exSnapshots.forEach((ex) => {
-    const docRef = doc(exRef, `/${ex.id}`);
-    changes.push(updateDoc(docRef, { used }));
-  });
+  while(batchedIds.length) {
+    const batch = batchedIds.splice(0,10);
+    const exQuery = query(exRef, where("id", "in", batch));
+    const exSnapshots = await getDocs(exQuery);
+
+    // modify used value for each
+    exSnapshots.forEach((ex) => {
+      const docRef = doc(exRef, `/${ex.id}`);
+      changes.push(updateDoc(docRef, { used }));
+    });
+  }
   return Promise.all(changes);
 };
 
@@ -208,15 +219,19 @@ export const deleteExamples: (exampleIds: string[]) => Promise<void[]> = async (
 ) => {
   // fetch examples to delete
   const exRef = collection(db, "examples");
-  const exQuery = query(exRef, where("id", "in", exampleIds));
-  const exSnapshots = await getDocs(exQuery);
-
-  // schedule each delete
+  let batchedIds: string[] = [...exampleIds];
   let deletions: Promise<void>[] = [];
-  exSnapshots.forEach((ex) => {
-    const docRef = doc(exRef, `/${ex.id}`);
-    deletions.push(deleteDoc(docRef));
-  });
+  while(batchedIds.length) {
+    const batch = batchedIds.splice(0,10);
+    const exQuery = query(exRef, where("id", "in", batch));
+    const exSnapshots = await getDocs(exQuery);
+
+    // schedule each delete
+    exSnapshots.forEach((ex) => {
+      const docRef = doc(exRef, `/${ex.id}`);
+      deletions.push(deleteDoc(docRef));
+    });
+  }
   return Promise.all(deletions);
 };
 
