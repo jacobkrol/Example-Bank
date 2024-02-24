@@ -345,3 +345,37 @@ export const countExamples: (unusedOnly?: boolean) => Promise<number> = async (
   const exSnapshot = await getCountFromServer(exQuery);
   return exSnapshot.data().count;
 };
+
+export const importExamples: (examples: Example[]) => Promise<void> = async (
+  examples: Example[]
+) => {
+  if (!auth.currentUser?.uid) return;
+
+  const importJobs = examples.map(addExample);
+  await Promise.all(importJobs);
+};
+
+export const setCodeImported: (
+  redeemCode: string,
+  imported: boolean
+) => Promise<void> = async (redeemCode: string, imported: boolean) => {
+  // fetch code to modify
+  const codeRef = collection(db, "codes");
+  const codeQuery = query(codeRef, where("code", "==", redeemCode));
+  const codeSnapshot = await getDocs(codeQuery);
+  const docRef = doc(codeRef, `/${codeSnapshot.docs[0].id}`);
+  await updateDoc(docRef, { "meta.imported": imported });
+};
+
+export const isCodeImported: (redeemCode: string) => Promise<boolean> = async (
+  redeemCode
+) => {
+  // find matching redeem code document
+  const codeRef = collection(db, "codes") as CollectionReference<RedeemCode>;
+  const codeQuery = query(codeRef, where("code", "==", redeemCode));
+  const codeSnapshots = await getDocs(codeQuery);
+  const matchedDoc = codeSnapshots.docs[0];
+
+  // parse matching document
+  return !!matchedDoc?.data()?.meta?.imported;
+};

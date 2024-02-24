@@ -1,4 +1,10 @@
-import { useState, FormEventHandler, useEffect, useCallback } from "react";
+import {
+  useState,
+  FormEventHandler,
+  useEffect,
+  useCallback,
+  useMemo
+} from "react";
 import { Text, Form } from "../styles/styled";
 import { Link, useLocation } from "react-router-dom";
 import { WiredButton, WiredDialog } from "../components/WiredElements";
@@ -38,7 +44,7 @@ export default function Upload({ uid }: { uid: string }): JSX.Element {
   const dbSource = useDebounce(uploadData.source, 500);
   const location = useLocation();
 
-  const isLoggedIn = !!uid.length;
+  const isLoggedIn = useMemo(() => !!uid.length, [uid]);
 
   const rememberDataLocally = () => {
     window.sessionStorage.setItem("draftupload", JSON.stringify(uploadData));

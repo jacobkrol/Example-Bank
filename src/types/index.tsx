@@ -8,6 +8,7 @@ export interface Example {
   meta?: {
     created: { seconds: number; nanoseconds: number };
     owner: string;
+    freed?: boolean;
   };
 }
 
@@ -20,5 +21,6 @@ export interface RedeemCode {
     created: { seconds: number; nanoseconds: number };
     owner: string;
     opened?: { seconds: number; nanoseconds: number };
+    imported?: boolean;
   };
 }

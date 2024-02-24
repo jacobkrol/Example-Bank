@@ -132,3 +132,9 @@
 .sans-serif {
   font-family: sans-serif;
 }
+
+.button-spinner {
+  height: 1rem;
+  top: -1.25rem;
+  transform: scale(0.5);
+}

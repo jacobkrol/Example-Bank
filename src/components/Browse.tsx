@@ -230,7 +230,7 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           if (
             window.confirm(
               "Are you sure you would like to delete the following examples?\n\n\u2022 " +
-                titles.join("\n\u2022") +
+                titles.join("\n\u2022 ") +
                 "\n\nThis action cannot be undone."
             )
           ) {
