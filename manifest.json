@@ -26,7 +26,7 @@
     }
   ],
   "share_target": {
-    "action": "/share",
+    "action": "share",
     "method": "GET",
     "params": {
       "title": "title",
@@ -39,4 +39,3 @@
   "theme_color": "#FFE366",
   "background_color": "#F8F4E3"
 }
-
