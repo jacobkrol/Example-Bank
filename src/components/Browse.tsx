@@ -24,11 +24,9 @@ import "../styles/wiredstyles.css";
 import { Example, RedeemCode } from "../types";
 import {
   addCode,
-  auth,
   deleteExamples,
   freeUnusedExpiredCodes,
   getExamples,
-  isUserAdmin,
   setUsedValue
 } from "../hooks/firebase";
 import getId from "../hooks/getId";
@@ -73,7 +71,7 @@ import CaretDown from "../images/caretdown";
 //   }
 // ];
 
-export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
+export default function Browse({ uid }: { uid: string }): JSX.Element {
   const [examples, setExamples] = useState<Example[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [checkedExs, setCheckedExs] = useState<string[]>([]);
@@ -93,18 +91,9 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
   const checkedExsRef = useRef<string[]>([]);
   const observer = useRef<IntersectionObserver>();
 
-  const lastExRef = useCallback(exNode => {
-    if (isLoading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && loadMore) {
-        loadNext();
-      }
-    });
-    if (exNode) observer.current.observe(exNode);
-  }, [isLoading, loadMore]);
-
   const navigate = useNavigate();
+
+  const isLoggedIn = !!uid.length;
 
   const loadExamples: (
     lastDoc?: QueryDocumentSnapshot<Example>,
@@ -123,8 +112,9 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
         );
         data = docs.map((d) => d.data());
         // append new examples, removing duplicates from double API calls
-        const uniqueData = data.filter(x => !examples.find(e => e.id === x.id));
-        setExamples((prev) => prev.concat(...uniqueData));
+        setExamples((prev) =>
+          prev.concat(...data.filter((x) => !prev.find((e) => e.id === x.id)))
+        );
 
         if (docs.length) setLastEx(docs[docs.length - 1]);
       } catch (err) {
@@ -152,10 +142,6 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
 
   useEffect(() => {
     async function asyncEffect() {
-      // navigate home if unauthorized
-      if (!(await isUserAdmin(auth.currentUser?.uid ?? ""))) navigate("/");
-
-      // free examples on unused expired codes and load examples
       await freeUnusedExpiredCodes();
       await loadExamples();
     }
@@ -368,16 +354,30 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
     setHideUsed(toggle?.checked);
   };
 
-  const loadNext = async () => {
+  const loadNext = useCallback(async () => {
     const nextBatch = await loadExamples(lastEx, order[0], order[1]);
     if (!nextBatch?.length) {
       setLoadMore(false);
     }
-  };
+  }, [lastEx, loadExamples, order]);
+
+  const lastExRef = useCallback(
+    (exNode) => {
+      if (isLoading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && loadMore) {
+          loadNext();
+        }
+      });
+      if (exNode) observer.current.observe(exNode);
+    },
+    [isLoading, loadMore, loadNext]
+  );
 
   useEffect(() => {
-    if (!isAdmin) navigate("/");
-  }, [isAdmin, navigate]);
+    if (!isLoggedIn) navigate("/");
+  }, [isLoggedIn, navigate]);
 
   return (
     <>
@@ -452,7 +452,11 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
           <>
             <ul className="stripped-ul">
               {examples.map((ex: Example, index: number) => (
-                <li key={ex.id} className="checkbox-li" ref={index === examples.length - 1 ? lastExRef : null}>
+                <li
+                  key={ex.id}
+                  className="checkbox-li"
+                  ref={index === examples.length - 1 ? lastExRef : null}
+                >
                   <WiredCheckbox
                     onChange={() => toggleCheck(ex.id || "no_id")}
                     checked={checkedExs.includes(ex.id)}
@@ -466,7 +470,7 @@ export default function Browse({ isAdmin }: { isAdmin: boolean }): JSX.Element {
                 </li>
               ))}
             </ul>
-            { isLoading ? (
+            {isLoading ? (
               <SpinnerArea>
                 <Text fontSize="1.25rem">Loading examples...</Text>
                 <WiredSpinner spinning />

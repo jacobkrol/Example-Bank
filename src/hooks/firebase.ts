@@ -16,7 +16,8 @@ import {
   doc,
   deleteDoc,
   updateDoc,
-  getDoc
+  getDoc,
+  getCountFromServer
 } from "firebase/firestore";
 import {
   getAuth,
@@ -73,7 +74,7 @@ export const addExample: (
     used: false,
     meta: {
       created: serverTimestamp(),
-      owner: auth.currentUser?.uid
+      owner: auth.currentUser?.uid ?? ""
     }
   });
 };
@@ -96,12 +97,14 @@ export const getExamples: (
         orderBy(orderByProp, orderByDir),
         startAfter(lastDoc),
         where("used", "in", hideUsed ? [false] : [true, false]),
+        where("meta.owner", "==", auth.currentUser?.uid ?? ""),
         limit(20)
       )
     : query(
         exRef,
         orderBy(orderByProp, orderByDir),
         where("used", "in", hideUsed ? [false] : [true, false]),
+        where("meta.owner", "==", auth.currentUser?.uid ?? ""),
         limit(20)
       );
   const docSnapshots = await getDocs(docQuery);
@@ -118,7 +121,7 @@ export const addCode: (
     used: false,
     meta: {
       created: serverTimestamp(),
-      owner: auth.currentUser?.uid
+      owner: auth.currentUser?.uid ?? ""
     }
   });
 };
@@ -173,8 +176,8 @@ export const getCodeExamples: (
   const exRef = collection(db, "examples") as CollectionReference<Example>;
   let batchedIds: string[] = [...exampleIds];
   let docs: QueryDocumentSnapshot<Example>[] = [];
-  while(batchedIds.length) {
-    const batch = batchedIds.splice(0,10);
+  while (batchedIds.length) {
+    const batch = batchedIds.splice(0, 10);
     const exQuery = query(exRef, where("id", "in", batch));
     const exSnapshots = await getDocs(exQuery);
     if (!exSnapshots.docs.length) return false;
@@ -200,8 +203,8 @@ export const setUsedValue: (
   const exRef = collection(db, "examples");
   let batchedIds: string[] = [...exampleIds];
   let changes: Promise<void>[] = [];
-  while(batchedIds.length) {
-    const batch = batchedIds.splice(0,10);
+  while (batchedIds.length) {
+    const batch = batchedIds.splice(0, 10);
     const exQuery = query(exRef, where("id", "in", batch));
     const exSnapshots = await getDocs(exQuery);
 
@@ -221,15 +224,17 @@ export const deleteExamples: (exampleIds: string[]) => Promise<void[]> = async (
   const exRef = collection(db, "examples");
   let batchedIds: string[] = [...exampleIds];
   let deletions: Promise<void>[] = [];
-  while(batchedIds.length) {
-    const batch = batchedIds.splice(0,10);
+  while (batchedIds.length) {
+    const batch = batchedIds.splice(0, 10);
     const exQuery = query(exRef, where("id", "in", batch));
     const exSnapshots = await getDocs(exQuery);
 
     // schedule each delete
     exSnapshots.forEach((ex) => {
       const docRef = doc(exRef, `/${ex.id}`);
-      deletions.push(deleteDoc(docRef));
+      if (ex.get("meta.owner") === auth.currentUser?.uid) {
+        deletions.push(deleteDoc(docRef));
+      }
     });
   }
   return Promise.all(deletions);
@@ -242,13 +247,17 @@ export const freeUnusedExpiredCodes: () => Promise<void> = async () => {
   const codeQuery = query(
     codeRef,
     where("used", "==", false),
-    where("meta.created", "<", expiredDate)
+    where("meta.created", "<", expiredDate),
+    where("meta.owner", "==", auth.currentUser?.uid ?? "")
   );
   const codeSnapshots = await getDocs(codeQuery);
+  const unfreedCodes = codeSnapshots.docs.filter(
+    (code) => code.get("meta.freed") !== true
+  );
 
   // find all examples on those codes
   let allExampleIds: string[] = [];
-  codeSnapshots.docs.forEach(
+  unfreedCodes.forEach(
     (code) =>
       (allExampleIds = allExampleIds.concat(code.get("exampleIds") ?? []))
   );
@@ -256,6 +265,14 @@ export const freeUnusedExpiredCodes: () => Promise<void> = async () => {
 
   // free examples on unused expired codes
   await setUsedValue(allExampleIds, false);
+
+  // mark examples on code as freed
+  let changes: Promise<void>[] = [];
+  unfreedCodes.forEach((code) => {
+    const docRef = doc(codeRef, `/${code.id}`);
+    changes.push(updateDoc(docRef, { "meta.freed": true }));
+  });
+  Promise.all(changes);
 };
 
 export const isUserAdmin: (uid: string) => Promise<boolean> = async (
@@ -288,7 +305,8 @@ export const getCodes: (
   const codeQuery = query(
     codeRef,
     where("used", "in", hideUsed ? [false] : [false, true]),
-    where("meta.created", ">", hideExpired ? expiredDate : new Date(0))
+    where("meta.created", ">", hideExpired ? expiredDate : new Date(0)),
+    where("meta.owner", "==", auth.currentUser?.uid ?? "")
   );
   const codeSnapshots = await getDocs(codeQuery);
   return codeSnapshots.docs;
@@ -307,7 +325,23 @@ export const deleteCode: (codeId: string) => Promise<void[]> = async (
   let deletions: Promise<void>[] = [];
   codeSnapshots.forEach((code) => {
     const docRef = doc(codeRef, `/${code.id}`);
-    deletions.push(deleteDoc(docRef));
+    if (code.get("meta.owner") === auth.currentUser?.uid) {
+      deletions.push(deleteDoc(docRef));
+    }
   });
   return Promise.all(deletions);
+};
+
+export const countExamples: (unusedOnly?: boolean) => Promise<number> = async (
+  unusedOnly: boolean = false
+) => {
+  if (!auth.currentUser?.uid) return -1;
+  const exRef = collection(db, "examples");
+  const exQuery = query(
+    exRef,
+    where("meta.owner", "==", auth.currentUser.uid),
+    where("used", "in", unusedOnly ? [false] : [true, false])
+  );
+  const exSnapshot = await getCountFromServer(exQuery);
+  return exSnapshot.data().count;
 };

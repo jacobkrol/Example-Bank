@@ -70,3 +70,31 @@ export const SpinnerArea = styled.div`
   flex-direction: column;
   align-items: center;
 `;
+
+export const ProfileRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  flex-wrap: wrap;
+`;
+
+export const ProfileColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+export const ProfileImage = styled.div`
+  width: 96px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  box-shadow: 4px 4px 8px var(--thirty);
+  display: grid;
+  place-items: center;
+`;
+
+export const ButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;

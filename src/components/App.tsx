@@ -19,9 +19,10 @@ import RedeemCode from "./RedeemCode";
 import { useAuthorization } from "../hooks/useAuthorization";
 import Manage from "./Manage";
 import Share from "./Share";
+import Profile from "./Profile";
 
 function App() {
-  const { isAdmin, isContributor } = useAuthorization();
+  const { uid } = useAuthorization();
 
   return (
     <HashRouter>
@@ -30,24 +31,14 @@ function App() {
           <Header />
           <BodyContainer>
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <Home isAdmin={isAdmin} isContributor={isContributor} />
-                }
-              />
-              <Route
-                path="/upload"
-                element={<Upload isContributor={isContributor} />}
-              />
-              <Route path="/browse" element={<Browse isAdmin={isAdmin} />} />
+              <Route path="/" element={<Home uid={uid} />} />
+              <Route path="/upload" element={<Upload uid={uid} />} />
+              <Route path="/browse" element={<Browse uid={uid} />} />
               <Route path="/redeem" element={<Redeem />} />
               <Route path="/redeem/:code" element={<RedeemCode />} />
-              <Route path="/manage" element={<Manage isAdmin={isAdmin} />} />
-              <Route
-                path="/share"
-                element={<Share isContributor={isContributor} />}
-              />
+              <Route path="/manage" element={<Manage uid={uid} />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/share" element={<Share uid={uid} />} />
               <Route path="*" element={<Error />} />
             </Routes>
           </BodyContainer>
@@ -59,4 +50,3 @@ function App() {
 }
 
 export default App;
-

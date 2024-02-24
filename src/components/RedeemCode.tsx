@@ -67,7 +67,7 @@ export default function RedeemCode() {
           </Text>
           <Text as="p" fontSize="1.25rem">
             Be sure to copy these examples to your personal example bank soon.
-            This code will expire on {expirationDate || "..."}.
+            This code will expire {expirationDate ? `on ${expirationDate}` : "soon"}.
           </Text>
           {examples.map((ex: Example) => (
             <React.Fragment key={ex.id}>

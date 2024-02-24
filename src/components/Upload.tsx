@@ -32,9 +32,9 @@ const initialUpload: Example = {
 };
 
 export default function Upload({
-  isContributor
+  uid
 }: {
-  isContributor: boolean;
+  uid: string;
 }): JSX.Element {
   const [uploadData, setUploadData] = useState(initialUpload);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
@@ -42,6 +42,8 @@ export default function Upload({
   const dbSource = useDebounce(uploadData.source, 500);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isLoggedIn = !!uid.length;
 
   useEffect(() => {
     const shareData: any = location.state;
@@ -152,8 +154,8 @@ export default function Upload({
   };
 
   useEffect(() => {
-    if (!isContributor) navigate("/");
-  }, [isContributor, navigate]);
+    if (!isLoggedIn) navigate("/");
+  }, [isLoggedIn, navigate]);
 
   return (
     <>

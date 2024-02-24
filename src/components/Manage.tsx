@@ -12,7 +12,7 @@ import {
   WiredToggle
 } from "./WiredElements";
 
-export default function Manage({ isAdmin }: { isAdmin: boolean }): JSX.Element {
+export default function Manage({ uid }: { uid: string }): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hideUsed, setHideUsed] = useState<boolean>(true);
   const [hideExpired, setHideExpired] = useState<boolean>(true);
@@ -20,6 +20,8 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }): JSX.Element {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [codes, setCodes] = useState<RedeemCode[]>([]);
   const navigate = useNavigate();
+
+  const isLoggedIn = !!uid.length;
 
   const loadCodes = useCallback(async () => {
     setIsLoading(true);
@@ -66,8 +68,8 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }): JSX.Element {
   };
 
   useEffect(() => {
-    if (!isAdmin) navigate("/");
-  }, [isAdmin, navigate]);
+    if (!isLoggedIn) navigate("/");
+  }, [isLoggedIn, navigate]);
 
   return (
     <>

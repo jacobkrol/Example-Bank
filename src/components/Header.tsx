@@ -3,7 +3,11 @@ import styled from "styled-components";
 import { Text } from "../styles/styled";
 import { auth, signOutUser } from "../hooks/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  getRedirectResult,
+  signInWithRedirect
+} from "firebase/auth";
 import Logo from "../images/logo-146.png";
 
 const HeaderContainer = styled.div`
@@ -38,6 +42,7 @@ export default function Header(): JSX.Element {
     const googleProvider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, googleProvider);
+      console.log(await getRedirectResult(auth));
     } catch (err: any) {
       if (!err.message.match("auth/popup-closed-by-user")) {
         alert(
