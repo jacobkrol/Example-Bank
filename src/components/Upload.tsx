@@ -1,6 +1,6 @@
-import { useState, FormEventHandler, useEffect } from "react";
+import { useState, FormEventHandler, useEffect, useCallback } from "react";
 import { Text, Form } from "../styles/styled";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { WiredButton, WiredDialog } from "../components/WiredElements";
 import yellowTheme from "../styles/yellowTheme.json";
 import "../styles/wiredstyles.css";
@@ -31,19 +31,59 @@ const initialUpload: Example = {
   img: ""
 };
 
-export default function Upload({
-  uid
-}: {
-  uid: string;
-}): JSX.Element {
+export default function Upload({ uid }: { uid: string }): JSX.Element {
   const [uploadData, setUploadData] = useState(initialUpload);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogText, setDialogText] = useState<string>("");
   const dbSource = useDebounce(uploadData.source, 500);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const isLoggedIn = !!uid.length;
+
+  const rememberDataLocally = () => {
+    window.sessionStorage.setItem("draftupload", JSON.stringify(uploadData));
+  };
+
+  const recallDataLocally = useCallback(() => {
+    const draft: string | null = window.sessionStorage.getItem("draftupload");
+    if (!draft) return;
+    try {
+      const parsed: any = JSON.parse(draft);
+      const exData: Example = castToExample(parsed);
+      if (
+        !exData.title.length &&
+        !exData.description.length &&
+        !exData.source.length &&
+        !exData.img?.length
+      ) {
+        console.log("Invalid cached object found. Discarding.");
+        forgetDataLocally();
+        return;
+      }
+
+      setUploadData((prev: Example) => ({
+        id: exData?.id || initialUpload.id,
+        title: exData?.title || initialUpload.title,
+        description: exData?.description || initialUpload.description,
+        source: exData?.source || initialUpload.source,
+        img: exData?.img || initialUpload.img
+      }));
+      setInputText({
+        id: exData?.id || initialUpload.id,
+        title: exData?.title || initialUpload.title,
+        description: exData?.description || initialUpload.description,
+        source: exData?.source || initialUpload.source,
+        img: exData?.img || initialUpload.img
+      });
+      return;
+    } catch (err) {
+      console.log(`error occurred while reading from cache: ${err}`);
+    }
+  }, []);
+
+  const forgetDataLocally = () => {
+    window.sessionStorage.removeItem("draftupload");
+  };
 
   useEffect(() => {
     const shareData: any = location.state;
@@ -60,8 +100,13 @@ export default function Upload({
         description: shareData.text,
         source: shareData.url
       });
+    } else {
+      recallDataLocally();
+      if (isLoggedIn) {
+        forgetDataLocally();
+      }
     }
-  }, [location.state]);
+  }, [location.state, recallDataLocally, isLoggedIn]);
 
   const setInputText = (state: Example) => {
     overwriteShadow("wired-input", "input", (x) => {
@@ -96,8 +141,24 @@ export default function Upload({
     });
   }, [dbSource]);
 
+  const castToExample: (obj: any) => Example = (obj) => ({
+    id: obj?.id || "",
+    title: obj?.title || "",
+    description: obj?.description || "",
+    source: obj?.source || "",
+    img: obj?.img || ""
+  });
+
   const submitUpload: FormEventHandler<Element> = (evt) => {
     evt.preventDefault();
+
+    // check user is logged in
+    if (!isLoggedIn) {
+      rememberDataLocally();
+      setDialogText("You must sign in to upload examples.");
+      setDialogOpen(true);
+      return;
+    }
 
     // check for valid submission
     let msg = [];
@@ -122,6 +183,7 @@ export default function Upload({
           setDialogOpen(true);
           setUploadData(initialUpload);
           setInputText(initialUpload);
+          forgetDataLocally();
         } else {
           alert(errMessage);
         }
@@ -152,10 +214,6 @@ export default function Upload({
     const textarea = evt.currentTarget as HTMLTextAreaElement;
     setUploadData((prev) => ({ ...prev, description: textarea.value ?? "" }));
   };
-
-  useEffect(() => {
-    if (!isLoggedIn) navigate("/");
-  }, [isLoggedIn, navigate]);
 
   return (
     <>
@@ -226,6 +284,7 @@ export default function Upload({
             onClick={submitUpload}
             itemType="submit"
             id="submit-upload"
+            disabled={!isLoggedIn}
           >
             Upload
           </WiredButton>

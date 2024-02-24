@@ -38,7 +38,7 @@ function App() {
               <Route path="/redeem/:code" element={<RedeemCode />} />
               <Route path="/manage" element={<Manage uid={uid} />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/share" element={<Share uid={uid} />} />
+              <Route path="/share" element={<Share />} />
               <Route path="*" element={<Error />} />
             </Routes>
           </BodyContainer>

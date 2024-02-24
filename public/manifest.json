@@ -23,10 +23,15 @@
       "src": "logo-237.png",
       "type": "image/png",
       "sizes": "237x237"
+    },
+    {
+      "src": "logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "share_target": {
-    "action": "share",
+    "action": "/share/",
     "method": "GET",
     "params": {
       "title": "title",
