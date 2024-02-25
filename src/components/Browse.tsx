@@ -95,12 +95,20 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
 
   const isLoggedIn = !!uid.length;
 
-  const loadExamples: (
-    lastDoc?: QueryDocumentSnapshot<Example>,
-    orderByProp?: string,
-    orderByDir?: "asc" | "desc"
-  ) => Promise<Example[]> = useCallback(
-    async (lastDoc, orderByProp, orderByDir) => {
+  const loadExamples: ({
+    lastDoc,
+    orderByProp,
+    orderByDir,
+    hideUsedProp,
+    resetExs
+  }: {
+    lastDoc?: QueryDocumentSnapshot<Example>;
+    orderByProp?: string;
+    orderByDir?: "asc" | "desc";
+    hideUsedProp?: boolean;
+    resetExs?: boolean;
+  }) => Promise<Example[]> = useCallback(
+    async ({ lastDoc, orderByProp, orderByDir, hideUsedProp, resetExs }) => {
       setIsLoading(true);
       let data: Example[] = [];
       try {
@@ -108,15 +116,28 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           lastDoc,
           orderByProp,
           orderByDir,
-          hideUsed
+          hideUsedProp
         );
         data = docs.map((d) => d.data());
         // append new examples, removing duplicates from double API calls
         setExamples((prev) =>
-          prev.concat(...data.filter((x) => !prev.find((e) => e.id === x.id)))
+          resetExs
+            ? [...data]
+            : prev.concat(
+                ...data.filter((x) => !prev.find((e) => e.id === x.id))
+              )
         );
 
-        if (docs.length) setLastEx(docs[docs.length - 1]);
+        if (docs.length) {
+          // reset last example to last of current batch
+          setLastEx(docs[docs.length - 1]);
+        }
+        if (resetExs) {
+          // clear last example if "reset"
+          console.log("reset");
+          setLastEx(undefined);
+          setLoadMore(true);
+        }
       } catch (err) {
         console.error(err);
         setDialogText(
@@ -129,21 +150,27 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
         return data;
       }
     },
-    [hideUsed]
+    []
   );
 
   useEffect(() => {
-    if (hideUsed) {
-      setExamples((prev) => prev.filter((ex) => !ex.used));
-    } else {
-      // else, loadExamples called by default due to hideUsed dependency
+    async function asyncEffect() {
+      console.log("load examples with new used or order");
+      await loadExamples({
+        orderByProp: order[0],
+        orderByDir: order[1],
+        hideUsedProp: hideUsed,
+        resetExs: true
+      });
     }
+
+    asyncEffect();
   }, [hideUsed, loadExamples, order]);
 
   useEffect(() => {
     async function asyncEffect() {
       await freeUnusedExpiredCodes();
-      await loadExamples();
+      await loadExamples({});
     }
 
     asyncEffect();
@@ -193,6 +220,11 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           console.log("mark as used");
           try {
             await setUsedValue(checkedExsRef.current, true);
+            if (hideUsed) {
+              setExamples((prev) =>
+                prev.filter((ex) => checkedExsRef.current.indexOf(ex.id) === -1)
+              );
+            }
             setDialogText("Examples are successfully marked as used.");
             setDialogOpen(true);
           } catch (err) {
@@ -236,6 +268,13 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           ) {
             try {
               await deleteExamples(checkedExsRef.current);
+              if (hideUsed) {
+                setExamples((prev) =>
+                  prev.filter(
+                    (ex) => checkedExsRef.current.indexOf(ex.id) === -1
+                  )
+                );
+              }
               setDialogText("Successfully deleted!");
               setDialogOpen(true);
               setExamples((prev) =>
@@ -272,40 +311,33 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
 
   const handleBrowseSort: (
     value: "new" | "old" | "a" | "z" | "default"
-  ) => Promise<void> = useCallback(
-    async (value) => {
-      switch (value) {
-        case "new":
-          await loadExamples(undefined, "meta.created", "desc");
-          setOrder(["meta.created", "desc"]);
-          break;
-        case "old":
-          await loadExamples(undefined, "meta.created", "asc");
-          setOrder(["meta.created", "asc"]);
-          break;
-        case "a":
-          await loadExamples(undefined, "title", "asc");
-          setOrder(["title", "asc"]);
-          break;
-        case "z":
-          await loadExamples(undefined, "title", "desc");
-          setOrder(["title", "desc"]);
-          break;
-        case "default":
-          break;
-        default:
-          console.error("Unrecognized sort selection:", value);
-          break;
-      }
+  ) => Promise<void> = useCallback(async (value) => {
+    switch (value) {
+      case "new":
+        setOrder(["meta.created", "desc"]);
+        break;
+      case "old":
+        setOrder(["meta.created", "asc"]);
+        break;
+      case "a":
+        setOrder(["title", "asc"]);
+        break;
+      case "z":
+        setOrder(["title", "desc"]);
+        break;
+      case "default":
+        break;
+      default:
+        console.error("Unrecognized sort selection:", value);
+        break;
+    }
 
-      setCheckedExs([]);
-      setSortSelected("default");
-      const combineShadow = document.getElementById("browse-sort")?.shadowRoot;
-      const combineText = combineShadow?.getElementById("textPanel");
-      if (combineText) combineText.innerText = "-- Sort By --";
-    },
-    [loadExamples]
-  );
+    setCheckedExs([]);
+    setSortSelected("default");
+    const combineShadow = document.getElementById("browse-sort")?.shadowRoot;
+    const combineText = combineShadow?.getElementById("textPanel");
+    if (combineText) combineText.innerText = "-- Sort By --";
+  }, []);
 
   const handleSelected = useCallback(
     async (evt: any) => {
@@ -355,11 +387,24 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
   };
 
   const loadNext = useCallback(async () => {
-    const nextBatch = await loadExamples(lastEx, order[0], order[1]);
+    const nextBatch = await loadExamples({
+      lastDoc: lastEx,
+      orderByProp: order[0],
+      orderByDir: order[1],
+      hideUsedProp: hideUsed
+    });
+    console.log({
+      lastDoc: lastEx,
+      orderByProp: order[0],
+      orderByDir: order[1],
+      hideUsedProp: hideUsed,
+      nextBatchLength: nextBatch.length
+    });
     if (!nextBatch?.length) {
+      console.log("no more");
       setLoadMore(false);
     }
-  }, [lastEx, loadExamples, order]);
+  }, [lastEx, loadExamples, order, hideUsed]);
 
   const lastExRef = useCallback(
     (exNode) => {

@@ -17,7 +17,8 @@ import {
   deleteDoc,
   updateDoc,
   getDoc,
-  getCountFromServer
+  getCountFromServer,
+  QueryConstraint
 } from "firebase/firestore";
 import {
   getAuth,
@@ -83,30 +84,26 @@ export const getExamples: (
   lastDoc?: QueryDocumentSnapshot<Example>,
   orderByProp?: string,
   orderByDir?: "asc" | "desc",
-  hideUsed?: boolean
+  hideUsed?: boolean,
+  max?: number
 ) => Promise<QueryDocumentSnapshot<Example>[]> = async (
   lastDoc,
   orderByProp = "meta.created",
   orderByDir = "asc",
-  hideUsed = true
+  hideUsed = true,
+  max = 5
 ) => {
   const exRef = collection(db, "examples") as CollectionReference<Example>;
-  const docQuery = lastDoc
-    ? query(
-        exRef,
-        orderBy(orderByProp, orderByDir),
-        startAfter(lastDoc),
-        where("used", "in", hideUsed ? [false] : [true, false]),
-        where("meta.owner", "==", auth.currentUser?.uid ?? ""),
-        limit(20)
-      )
-    : query(
-        exRef,
-        orderBy(orderByProp, orderByDir),
-        where("used", "in", hideUsed ? [false] : [true, false]),
-        where("meta.owner", "==", auth.currentUser?.uid ?? ""),
-        limit(20)
-      );
+  const constraints: QueryConstraint[] = [
+    orderBy(orderByProp, orderByDir),
+    where("used", "in", hideUsed ? [false] : [true, false]),
+    where("meta.owner", "==", auth.currentUser?.uid ?? ""),
+    limit(max)
+  ];
+  if (lastDoc) {
+    constraints.push(startAfter(lastDoc));
+  }
+  const docQuery = query(exRef, ...constraints);
   const docSnapshots = await getDocs(docQuery);
   return docSnapshots.docs;
 };
