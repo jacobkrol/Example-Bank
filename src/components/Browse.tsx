@@ -33,6 +33,7 @@ import getId from "../hooks/getId";
 import { QueryDocumentSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import CaretDown from "../images/caretdown";
+import useDebounce from "../hooks/useDebounce";
 
 // const data = [
 //   {
@@ -90,6 +91,7 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
   >();
   const checkedExsRef = useRef<string[]>([]);
   const observer = useRef<IntersectionObserver>();
+  const dbSearch = useDebounce(searchValue, 500);
 
   const navigate = useNavigate();
 
@@ -100,15 +102,24 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
     orderByProp,
     orderByDir,
     hideUsedProp,
+    searchText,
     resetExs
   }: {
     lastDoc?: QueryDocumentSnapshot<Example>;
     orderByProp?: string;
     orderByDir?: "asc" | "desc";
     hideUsedProp?: boolean;
+    searchText?: string;
     resetExs?: boolean;
   }) => Promise<Example[]> = useCallback(
-    async ({ lastDoc, orderByProp, orderByDir, hideUsedProp, resetExs }) => {
+    async ({
+      lastDoc,
+      orderByProp,
+      orderByDir,
+      hideUsedProp,
+      searchText,
+      resetExs
+    }) => {
       setIsLoading(true);
       let data: Example[] = [];
       try {
@@ -116,6 +127,7 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           lastDoc,
           orderByProp,
           orderByDir,
+          searchText,
           hideUsedProp
         );
         data = docs.map((d) => d.data());
@@ -134,7 +146,6 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
         }
         if (resetExs) {
           // clear last example if "reset"
-          console.log("reset");
           setLastEx(undefined);
           setLoadMore(true);
         }
@@ -153,19 +164,22 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
     []
   );
 
-  useEffect(() => {
-    async function asyncEffect() {
-      console.log("load examples with new used or order");
+  const callLoadExamples: (overrides?: any) => void = useCallback(
+    async (overrides = {}) => {
       await loadExamples({
         orderByProp: order[0],
         orderByDir: order[1],
         hideUsedProp: hideUsed,
+        searchText: overrides?.searchText ?? dbSearch,
         resetExs: true
       });
-    }
+    },
+    [order, hideUsed, dbSearch, loadExamples]
+  );
 
-    asyncEffect();
-  }, [hideUsed, loadExamples, order]);
+  useEffect(() => {
+    callLoadExamples();
+  }, [hideUsed, loadExamples, callLoadExamples, order, dbSearch]);
 
   useEffect(() => {
     async function asyncEffect() {
@@ -187,7 +201,6 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
       // perform action
       switch (value) {
         case "share":
-          console.log("create shareable code");
           const code: RedeemCode = {
             id: "",
             code: getId(6).toLocaleUpperCase(),
@@ -217,7 +230,6 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           }
 
         case "used":
-          console.log("mark as used");
           try {
             await setUsedValue(checkedExsRef.current, true);
             if (hideUsed) {
@@ -238,7 +250,6 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
             break;
           }
         case "new":
-          console.log("mark as available");
           try {
             await setUsedValue(checkedExsRef.current, false);
             setDialogText("Examples are successfully marked as not used.");
@@ -291,7 +302,7 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
           }
           break;
         case "default":
-          console.log("default action selected: no-op");
+          // default action selected: no-op
           return;
         default:
           console.error("Unrecognized action selected:", value);
@@ -342,13 +353,11 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
   const handleSelected = useCallback(
     async (evt: any) => {
       if (evt.target.id === "browse-action") {
-        console.log("action", evt.target.value.value);
         await handleBrowseAction(evt.target.value.value);
         return;
       }
 
       if (evt.target.id === "browse-sort") {
-        console.log("sort", evt.target.value.value);
         await handleBrowseSort(evt.target.value.value);
         return;
       }
@@ -362,6 +371,11 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
       "input",
       (el) => (el.style.backgroundColor = yellowTheme.colors["60"])
     );
+    overwriteShadow(
+      "wired-search-input",
+      "button",
+      (el) => (el.id = "search-button")
+    );
 
     document.addEventListener("selected", handleSelected);
 
@@ -374,10 +388,21 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
     );
   };
 
+  const searchButtonHandler = (evt: any) => {
+    setSearchValue("");
+    evt.currentTarget.removeEventListener("click", searchButtonHandler);
+  };
+
   const searchChange: ((e: Event) => unknown) &
     FormEventHandler<HTMLInputElement> = (evt: any) => {
     const input = evt.currentTarget as HTMLInputElement;
     setSearchValue(input.value);
+
+    const searchShadow = document.getElementById("browse-search")?.shadowRoot;
+    const searchButton = searchShadow?.getElementById("search-button");
+    if (input.value.length === 1) {
+      searchButton?.addEventListener("click", searchButtonHandler);
+    }
   };
 
   const handleHideUsedToggle: ((e: Event) => unknown) &
@@ -391,20 +416,13 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
       lastDoc: lastEx,
       orderByProp: order[0],
       orderByDir: order[1],
+      searchText: dbSearch,
       hideUsedProp: hideUsed
     });
-    console.log({
-      lastDoc: lastEx,
-      orderByProp: order[0],
-      orderByDir: order[1],
-      hideUsedProp: hideUsed,
-      nextBatchLength: nextBatch.length
-    });
     if (!nextBatch?.length) {
-      console.log("no more");
       setLoadMore(false);
     }
-  }, [lastEx, loadExamples, order, hideUsed]);
+  }, [lastEx, loadExamples, order, dbSearch, hideUsed]);
 
   const lastExRef = useCallback(
     (exNode) => {

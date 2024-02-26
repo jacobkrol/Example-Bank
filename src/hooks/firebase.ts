@@ -73,6 +73,7 @@ export const addExample: (
     img,
     id: getId(),
     used: false,
+    keywords: getKeywordsForTitle(uploadData.title),
     meta: {
       created: serverTimestamp(),
       owner: auth.currentUser?.uid ?? ""
@@ -84,12 +85,14 @@ export const getExamples: (
   lastDoc?: QueryDocumentSnapshot<Example>,
   orderByProp?: string,
   orderByDir?: "asc" | "desc",
+  searchText?: string,
   hideUsed?: boolean,
   max?: number
 ) => Promise<QueryDocumentSnapshot<Example>[]> = async (
   lastDoc,
   orderByProp = "meta.created",
   orderByDir = "asc",
+  searchText = "",
   hideUsed = true,
   max = 5
 ) => {
@@ -98,6 +101,7 @@ export const getExamples: (
     orderBy(orderByProp, orderByDir),
     where("used", "in", hideUsed ? [false] : [true, false]),
     where("meta.owner", "==", auth.currentUser?.uid ?? ""),
+    where("keywords", "array-contains", searchText.toLocaleLowerCase()),
     limit(max)
   ];
   if (lastDoc) {
@@ -106,6 +110,45 @@ export const getExamples: (
   const docQuery = query(exRef, ...constraints);
   const docSnapshots = await getDocs(docQuery);
   return docSnapshots.docs;
+};
+
+export const getKeywordsForTitle: (title: String) => String[] = (
+  title: String
+) => {
+  const words = title.toLocaleLowerCase().split(" ");
+  let keywords = [""];
+  for (let i = 0; i < words.length; i++) {
+    for (let j = 0; j < words[i].length; j++) {
+      const partial = words[i].substring(0, j + 1);
+      // push word partial keyword
+      keywords.push(partial);
+      // if not first word, push it as a combo with previous word
+      if (i > 0) {
+        keywords.push(words.slice(0, i).join(" ") + " " + partial);
+      }
+    }
+  }
+  return keywords;
+};
+
+export const refreshIndexesForUser = async () => {
+  // get all examples owned by this user
+  const exRef = collection(db, "examples");
+  const exQuery = query(
+    exRef,
+    where("meta.owner", "==", auth.currentUser?.uid)
+  );
+  const exSnapshots = await getDocs(exQuery);
+
+  // modify keywords value for each
+  let changes: Promise<void>[] = [];
+  exSnapshots.forEach((ex) => {
+    const docRef = doc(exRef, `/${ex.id}`);
+    changes.push(
+      updateDoc(docRef, { keywords: getKeywordsForTitle(ex.get("title")) })
+    );
+  });
+  await Promise.all(changes);
 };
 
 export const addCode: (
