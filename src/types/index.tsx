@@ -5,6 +5,7 @@ export interface Example {
   description: string;
   used?: boolean;
   img?: string;
+  keywords?: string[];
   meta?: {
     created: { seconds: number; nanoseconds: number };
     owner: string;
