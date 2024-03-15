@@ -5,14 +5,11 @@ import App from "./components/App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
 
-if (window.location.search) {
-  console.log(
-    `index: replacing ${window.location.href} with ${
-      window.location.pathname + window.location.hash + window.location.search
-    }`
-  );
+if (window.location.pathname.match(/(?<=\/Example-Book\/)\w+/)) {
   window.location.replace(
-    window.location.pathname + window.location.hash + window.location.search
+    "/Example-Book/#/" +
+      window.location.pathname.replace("/Example-Book/", "") +
+      window.location.search
   );
 }
 
