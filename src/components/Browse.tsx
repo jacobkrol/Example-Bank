@@ -83,6 +83,7 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
   >(["meta.created", "asc"]);
   const [searchValue, setSearchValue] = useState<string>("");
   const [hideUsed, setHideUsed] = useState<boolean>(true);
+  const [studyMode, setStudyMode] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogText, setDialogText] = useState<string>("");
   const [loadMore, setLoadMore] = useState<boolean>(true);
@@ -438,6 +439,13 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
     [isLoading, loadMore, loadNext]
   );
 
+  const handleStudyModeToggle: ((e: Event) => unknown) &
+    FormEventHandler<HTMLElement> = (evt) => {
+    const toggle = evt.target as any;
+    setStudyMode(toggle?.checked);
+    setCheckedExs([]);
+  };
+
   useEffect(() => {
     if (!isLoggedIn) navigate("/");
   }, [isLoggedIn, navigate]);
@@ -508,6 +516,20 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
                 onChange={handleHideUsedToggle}
               />
             </div>
+            <div
+              style={{
+                display: "flex",
+                placeItems: "center",
+                gap: "0.5rem"
+              }}
+            >
+              <label htmlFor="browse-view-toggle">Study Mode</label>
+              <WiredToggle
+                id="browse-view-toggle"
+                checked={studyMode}
+                onChange={handleStudyModeToggle}
+              />
+            </div>
           </div>
         </div>
 
@@ -520,16 +542,22 @@ export default function Browse({ uid }: { uid: string }): JSX.Element {
                   className="checkbox-li"
                   ref={index === examples.length - 1 ? lastExRef : null}
                 >
-                  <WiredCheckbox
-                    onChange={() => toggleCheck(ex.id || "no_id")}
-                    checked={checkedExs.includes(ex.id)}
-                  />
-                  <ExampleCard
-                    title={ex.title}
-                    source={ex.source}
-                    description={ex.description}
-                    img={ex.img}
-                  />
+                  {studyMode ? (
+                    <Text fontSize="1.25rem">{ex.title}</Text>
+                  ) : (
+                    <>
+                      <WiredCheckbox
+                        onChange={() => toggleCheck(ex.id || "no_id")}
+                        checked={checkedExs.includes(ex.id)}
+                      />
+                      <ExampleCard
+                        title={ex.title}
+                        source={ex.source}
+                        description={ex.description}
+                        img={ex.img}
+                      />
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
