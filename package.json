@@ -1,7 +1,7 @@
 {
   "name": "examplebook",
   "version": "0.1.0",
-  "homepage": "https://kroljs.com/Example-Book",
+  "homepage": "https://example-book.kroljs.com/",
   "private": true,
   "dependencies": {
     "firebase": "^9.11.0",
