@@ -20,6 +20,8 @@ import { useAuthorization } from "../hooks/useAuthorization";
 import Manage from "./Manage";
 import Share from "./Share";
 import Profile from "./Profile";
+import PrivacyPolicy from "./Privacy";
+import ContactUs from "./Contact";
 
 function App() {
   const { uid } = useAuthorization();
@@ -39,6 +41,8 @@ function App() {
               <Route path="/manage" element={<Manage uid={uid} />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/share" element={<Share />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="*" element={<Error />} />
             </Routes>
           </BodyContainer>

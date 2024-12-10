@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import {
   GoogleAuthProvider,
   getRedirectResult,
+  signInWithPopup,
   signInWithRedirect
 } from "firebase/auth";
 import Logo from "../images/logo-146.png";
@@ -41,8 +42,12 @@ export default function Header(): JSX.Element {
   const signIn = async () => {
     const googleProvider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(auth, googleProvider);
-      console.log(await getRedirectResult(auth));
+      if (process.env.NODE_ENV === "development") {
+        await signInWithPopup(auth, googleProvider);
+      } else {
+        await signInWithRedirect(auth, googleProvider);
+        console.log(await getRedirectResult(auth));
+      }
     } catch (err: any) {
       if (!err.message.match("auth/popup-closed-by-user")) {
         alert(

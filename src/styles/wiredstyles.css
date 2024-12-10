@@ -124,6 +124,10 @@
   padding: 1rem 0.5rem;
 }
 
+.max-width-med {
+  max-width: 500px;
+}
+
 .dialog > * {
   align-self: flex-end;
   margin-right: 1rem;

@@ -98,3 +98,11 @@ export const ButtonRow = styled.div`
   align-items: center;
   gap: 0.75rem;
 `;
+
+export const UnorderedList = styled.ul`
+  margin: 0;
+`;
+
+export const ListItem = styled.li`
+  margin: 0;
+`;
