@@ -5,11 +5,9 @@ import App from "./components/App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
 
-if (window.location.pathname.match(/(?<=\/Example-Book\/)\w+/)) {
+if (window.location.pathname.startsWith("/share")) {
   window.location.replace(
-    "/Example-Book/#/" +
-      window.location.pathname.replace("/Example-Book/", "") +
-      window.location.search
+    "/#" + window.location.pathname + window.location.search
   );
 }
 
