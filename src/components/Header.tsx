@@ -101,7 +101,7 @@ export default function Header(): JSX.Element {
           onClick={user ? signOut : signIn}
           fontSize="1.5rem"
         >
-          {user ? "Sign Out" : "Sign In"}
+          {user ? " " : " "}
         </Text>
       </RightGroup>
     </HeaderContainer>

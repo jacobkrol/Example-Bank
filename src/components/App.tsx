@@ -11,17 +11,7 @@ import "../styles/wiredstyles.css";
 import Home from "./Home";
 import Header from "./Header";
 import Footer from "./Footer";
-import Upload from "./Upload";
-import Browse from "./Browse";
-import Error from "./Error";
-import Redeem from "./Redeem";
-import RedeemCode from "./RedeemCode";
 import { useAuthorization } from "../hooks/useAuthorization";
-import Manage from "./Manage";
-import Share from "./Share";
-import Profile from "./Profile";
-import PrivacyPolicy from "./Privacy";
-import ContactUs from "./Contact";
 
 function App() {
   const { uid } = useAuthorization();
@@ -33,17 +23,7 @@ function App() {
           <Header />
           <BodyContainer>
             <Routes>
-              <Route path="/" element={<Home uid={uid} />} />
-              <Route path="/upload" element={<Upload uid={uid} />} />
-              <Route path="/browse" element={<Browse uid={uid} />} />
-              <Route path="/redeem" element={<Redeem />} />
-              <Route path="/redeem/:code" element={<RedeemCode />} />
-              <Route path="/manage" element={<Manage uid={uid} />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/share" element={<Share />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="*" element={<Error />} />
+              <Route path="*" element={<Home uid={uid} />} />
             </Routes>
           </BodyContainer>
           <Footer />
